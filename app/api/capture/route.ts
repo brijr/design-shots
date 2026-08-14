@@ -104,6 +104,8 @@ export async function POST(request: Request) {
       label: displayUrl(url),
     });
   } catch (error) {
+    // The user gets a calm sentence; the logs get the real cause.
+    console.error("capture failed", { url: url.toString(), error });
     const message =
       error instanceof Error && /timeout/i.test(error.message)
         ? "The page took too long to load."
