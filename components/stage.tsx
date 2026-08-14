@@ -70,8 +70,7 @@ export function Stage({
             Drop a screenshot
           </p>
           <p className="mt-2 text-sm text-muted-foreground">
-            Or paste one from the clipboard. Nothing is ever uploaded — there is
-            no server, and the shot is composed in this tab.
+            Or paste one from the clipboard.
           </p>
           <div className="mt-5 flex items-center justify-center gap-2">
             <Button onClick={onPick}>Choose a file</Button>

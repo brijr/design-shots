@@ -57,7 +57,7 @@ arrives. The image itself is never stored anywhere.
 | Path | Role |
 | --- | --- |
 | `lib/composition.ts` | Layout maths and the canvas painter. All output pixels originate here. |
-| `lib/sample.ts` | The example screenshot, painted rather than shipped as an asset. |
+| `public/example.webp` | The "try an example" shot — a real capture of [bridger.to](https://bridger.to), loaded only on click. |
 | `components/stage.tsx` | The canvas, the drop target, the empty state. |
 | `components/studio.tsx` | State and the instrument panel. |
 | `components/ui.tsx` | The four primitives the panel is built from. |
