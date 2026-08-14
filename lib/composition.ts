@@ -1,10 +1,20 @@
-export type BackgroundId = "white" | "paper" | "charcoal" | "black";
-export type InsetId = "tight" | "even" | "wide";
-export type CornerId = "none" | "subtle" | "round";
-export type EdgeId = "none" | "hairline";
-export type ShadowId = "none" | "soft" | "deep";
-export type FrameId = "none" | "window";
-export type RatioId = "auto" | "16:9" | "3:2" | "4:3" | "1:1" | "4:5";
+// Ids are declared as arrays so the runtime can check a stored value against
+// the same list the type is derived from. They cannot drift apart.
+export const BACKGROUND_IDS = ["white", "grey", "charcoal", "black"] as const;
+export const INSET_IDS = ["tight", "even", "wide"] as const;
+export const CORNER_IDS = ["none", "subtle", "round"] as const;
+export const EDGE_IDS = ["none", "hairline"] as const;
+export const SHADOW_IDS = ["none", "soft", "deep"] as const;
+export const FRAME_IDS = ["none", "window"] as const;
+export const RATIO_IDS = ["auto", "16:9", "3:2", "4:3", "1:1", "4:5"] as const;
+
+export type BackgroundId = (typeof BACKGROUND_IDS)[number];
+export type InsetId = (typeof INSET_IDS)[number];
+export type CornerId = (typeof CORNER_IDS)[number];
+export type EdgeId = (typeof EDGE_IDS)[number];
+export type ShadowId = (typeof SHADOW_IDS)[number];
+export type FrameId = (typeof FRAME_IDS)[number];
+export type RatioId = (typeof RATIO_IDS)[number];
 
 export interface Composition {
   background: BackgroundId;
@@ -56,6 +66,38 @@ export const RATIOS: Record<RatioId, number | null> = {
   "1:1": 1,
   "4:5": 4 / 5,
 };
+
+/**
+ * Compositions are restored from storage, which may hold a shape written by an
+ * older build — an id that has since been renamed or dropped. Anything not
+ * recognised falls back to the default rather than reaching the painter, where
+ * an unknown background would be a missing surface and a blank canvas.
+ */
+export function sanitizeComposition(raw: unknown): Composition {
+  const input = (typeof raw === "object" && raw ? raw : {}) as Record<
+    string,
+    unknown
+  >;
+
+  const pick = <T extends string>(key: string, allowed: readonly T[]): T => {
+    const value = input[key];
+    return allowed.includes(value as T)
+      ? (value as T)
+      : (DEFAULT_COMPOSITION[key as keyof Composition] as T);
+  };
+
+  return {
+    background: pick("background", BACKGROUND_IDS),
+    inset: pick("inset", INSET_IDS),
+    corner: pick("corner", CORNER_IDS),
+    edge: pick("edge", EDGE_IDS),
+    shadow: pick("shadow", SHADOW_IDS),
+    frame: pick("frame", FRAME_IDS),
+    ratio: pick("ratio", RATIO_IDS),
+    scale: input.scale === 1 ? 1 : 2,
+    label: "",
+  };
+}
 
 /** Hard ceiling on either output dimension, to keep the canvas sane. */
 const MAX_EDGE = 5000;
@@ -154,12 +196,12 @@ const SURFACE = {
     plate: "#ffffff",
     edge: "rgba(0,0,0,0.13)",
   },
-  paper: {
-    page: "#f0ede7",
-    bar: "#e8e4dc",
-    hairline: "#dad5cb",
-    dot: "#c9c3b7",
-    caption: "#948d80",
+  grey: {
+    page: "#f1f2f4",
+    bar: "#e7e9ed",
+    hairline: "#dbdee4",
+    dot: "#c7cbd3",
+    caption: "#8b9099",
     plate: "#ffffff",
     edge: "rgba(0,0,0,0.12)",
   },

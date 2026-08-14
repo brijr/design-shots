@@ -15,6 +15,7 @@ import {
   artworkOf,
   guessDensity,
   layout,
+  sanitizeComposition,
   type BackgroundId,
   type Composition,
   type CornerId,
@@ -28,7 +29,7 @@ import { cn } from "@/lib/utils";
 
 const BACKGROUNDS: readonly Option<BackgroundId>[] = [
   { value: "white", label: "White", swatch: "#ffffff" },
-  { value: "paper", label: "Paper", swatch: "#f0ede7" },
+  { value: "grey", label: "Grey", swatch: "#f1f2f4" },
   { value: "charcoal", label: "Charcoal", swatch: "#161616" },
   { value: "black", label: "Black", swatch: "#000000" },
 ];
@@ -85,10 +86,7 @@ const STORAGE_KEY = "design-shots:composition";
 function readStored(): Composition | null {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    // Spread over the defaults so a stored shape from an older build, missing
-    // keys added since, still yields a complete composition.
-    return { ...DEFAULT_COMPOSITION, ...JSON.parse(raw), label: "" };
+    return raw ? sanitizeComposition(JSON.parse(raw)) : null;
   } catch {
     return null;
   }
