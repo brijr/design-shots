@@ -1,0 +1,12 @@
+import type { NextConfig } from "next";
+
+/**
+ * Nothing to configure. Every {{ title }} composition happens in the browser,
+ * so this ships as static files with no server behind it.
+ *
+ * No transpilePackages either: Turbopack compiles pnpm workspace packages
+ * automatically, so @design-tools/ui can ship raw .tsx.
+ */
+const nextConfig: NextConfig = {};
+
+export default nextConfig;

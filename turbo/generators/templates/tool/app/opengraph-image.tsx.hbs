@@ -1,0 +1,79 @@
+import { ImageResponse } from "next/og";
+
+const TITLE = "{{ title }}";
+const DESCRIPTION = "{{ description }}";
+const DOMAIN = "{{ kebabCase name }}.vercel.app";
+
+export const alt = `${TITLE} — ${DESCRIPTION}`;
+export const size = { width: 1200, height: 630 };
+export const contentType = "image/png";
+
+// Styles live up here rather than inline. This file is generated from a
+// Handlebars template, and a doubled opening brace in JSX inline styles is
+// read as an interpolation and eaten. Hoisting sidesteps it, and reads better.
+const field = {
+  width: "100%",
+  height: "100%",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  background: "#f2f2f2",
+} as const;
+
+const card = {
+  width: 1000,
+  height: 450,
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "space-between",
+  padding: 64,
+  borderRadius: 14,
+  border: "1px solid #e0e0e0",
+  background: "#ffffff",
+} as const;
+
+const stack = { display: "flex", flexDirection: "column" } as const;
+
+const headline = {
+  fontSize: 68,
+  fontWeight: 600,
+  letterSpacing: -2,
+  color: "#18181b",
+} as const;
+
+const sub = {
+  marginTop: 20,
+  fontSize: 30,
+  lineHeight: 1.4,
+  color: "#71717a",
+  maxWidth: 720,
+} as const;
+
+const foot = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  fontSize: 22,
+  color: "#a1a1aa",
+} as const;
+
+/** The card is itself a shot: an artboard on a neutral field. */
+export default function OpengraphImage() {
+  return new ImageResponse(
+    (
+      <div style={field}>
+        <div style={card}>
+          <div style={stack}>
+            <div style={headline}>{TITLE}</div>
+            <div style={sub}>{DESCRIPTION}</div>
+          </div>
+          <div style={foot}>
+            <span>{DOMAIN}</span>
+            <span>Free and open source</span>
+          </div>
+        </div>
+      </div>
+    ),
+    size,
+  );
+}

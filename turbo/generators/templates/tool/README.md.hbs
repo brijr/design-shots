@@ -1,0 +1,21 @@
+# {{ title }}
+
+{{ description }}
+
+```bash
+pnpm --filter {{ kebabCase name }} dev
+```
+
+There is no server. No API routes, no database, no environment variables, no
+account. Everything is composed in the browser and never touches a network.
+
+## Before this ships
+
+- [ ] Write `components/tool.tsx` — it ships a labelled placeholder.
+- [ ] Rewrite `app/opengraph-image.tsx` so the card shows what the tool does.
+- [ ] Create the Vercel project `{{ kebabCase name }}` with root directory
+      `apps/{{ kebabCase name }}`, then point `SITE` in `app/layout.tsx` at its
+      domain (it defaults to the `.vercel.app` URL).
+- [ ] Delete this section.
+
+Repo conventions live in `../../CLAUDE.md`; vocabulary in `../../CONTEXT.md`.

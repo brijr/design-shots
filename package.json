@@ -6,6 +6,7 @@
     "node": ">=22"
   },
   "scripts": {
+    "new": "turbo gen tool",
     "dev": "turbo dev",
     "build": "turbo build",
     "lint": "turbo lint",

@@ -1,0 +1,7 @@
+@import "tailwindcss";
+@import "@design-tools/theme/tokens.css";
+
+/* Tailwind skips node_modules and gitignored paths when detecting classes, so
+   the shared primitives must be registered by path or the panel ships
+   unstyled — silently, with a green build. Relative to this file. */
+@source "../../../packages/ui/src";

@@ -1,0 +1,66 @@
+"use client";
+
+import { useState } from "react";
+import { Button } from "@design-tools/ui/button";
+import { Field } from "@design-tools/ui/field";
+import { Section } from "@design-tools/ui/section";
+import { Segmented } from "@design-tools/ui/segmented";
+
+const TITLE = "{{ title }}";
+const DESCRIPTION = "{{ description }}";
+
+const STOPS = [
+  { value: "first", label: "First" },
+  { value: "second", label: "Second" },
+  { value: "third", label: "Third" },
+] as const;
+
+type Stop = (typeof STOPS)[number]["value"];
+
+/**
+ * The shape every tool in this repo wears: the user's work on a stage to the
+ * left, a 300px instrument panel to the right, actions pinned to its bottom.
+ * Replace the contents — keep the shape.
+ */
+export function Tool() {
+  const [stop, setStop] = useState<Stop>("second");
+
+  return (
+    <main className="flex h-dvh flex-col md:flex-row">
+      <div className="relative grid min-h-0 min-w-0 flex-1 place-items-center overflow-hidden bg-stage p-6 md:p-10">
+        <div className="max-w-sm px-6 py-10 text-center">
+          <p className="text-xl font-medium tracking-tight">{TITLE}</p>
+          <p className="mt-2 text-sm text-muted-foreground">{DESCRIPTION}</p>
+        </div>
+      </div>
+
+      <aside className="flex shrink-0 flex-col border-border md:w-[300px] md:border-l">
+        <header className="flex h-14 shrink-0 items-center justify-between border-y border-border px-5 md:border-t-0">
+          <span className="text-sm font-medium tracking-tight">{TITLE}</span>
+        </header>
+
+        <div className="min-h-0 flex-1 space-y-7 overflow-y-auto px-5 py-6">
+          <Section title="Example">
+            {/* Controls offer named stops, never a slider. Three stops are
+                three results that work; a slider promises a thousand settings
+                and delivers one that is right. */}
+            <Field label="Stop">
+              <Segmented
+                label="Stop"
+                value={stop}
+                options={STOPS}
+                onChange={setStop}
+              />
+            </Field>
+          </Section>
+        </div>
+
+        <div className="shrink-0 space-y-3 border-t border-border px-5 py-4">
+          <Button variant="default" className="w-full" disabled>
+            Copy
+          </Button>
+        </div>
+      </aside>
+    </main>
+  );
+}
