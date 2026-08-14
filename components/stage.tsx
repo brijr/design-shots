@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, type RefObject } from "react";
+import { ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui";
 import { artworkOf, layout, paint, type Composition } from "@/lib/composition";
 import { cn } from "@/lib/utils";
@@ -78,6 +79,16 @@ export function Stage({
               Try an example
             </Button>
           </div>
+
+          <a
+            href="https://bridger.to"
+            target="_blank"
+            rel="noreferrer"
+            className="mt-9 inline-flex items-center gap-1 rounded-sm text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            Built by Bridger
+            <ArrowUpRight className="size-3" />
+          </a>
         </div>
       )}
     </div>

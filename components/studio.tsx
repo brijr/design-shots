@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowUpRight, Check, Copy, Download } from "lucide-react";
+import { Check, Copy, Download } from "lucide-react";
 import { Stage } from "@/components/stage";
 import {
   Button,
@@ -388,18 +388,6 @@ export function Studio() {
               </Field>
             </Section>
           </div>
-
-          {/* Outside the inert block: attribution stays reachable before an
-              image is loaded. */}
-          <a
-            href="https://bridger.to"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            Built by Bridger
-            <ArrowUpRight className="size-3" />
-          </a>
         </div>
 
         <div className="shrink-0 space-y-3 border-t border-border px-5 py-4">
