@@ -5,21 +5,21 @@ import { Check, Copy, Download } from "lucide-react";
 import { Stage } from "@/components/stage";
 import {
   Button,
+  Field,
   Section,
   Segmented,
-  Slider,
   type Option,
 } from "@/components/ui";
 import {
   DEFAULT_COMPOSITION,
-  INSET_RANGE,
-  RADIUS_RANGE,
   artworkOf,
   guessDensity,
   layout,
   type BackgroundId,
   type Composition,
+  type CornerId,
   type FrameId,
+  type InsetId,
   type RatioId,
   type ShadowId,
 } from "@/lib/composition";
@@ -28,6 +28,18 @@ import { cn } from "@/lib/utils";
 const BACKGROUNDS: readonly Option<BackgroundId>[] = [
   { value: "white", label: "White", swatch: "#ffffff" },
   { value: "black", label: "Black", swatch: "#000000" },
+];
+
+const INSETS: readonly Option<InsetId>[] = [
+  { value: "tight", label: "Tight" },
+  { value: "even", label: "Even" },
+  { value: "wide", label: "Wide" },
+];
+
+const CORNERS: readonly Option<CornerId>[] = [
+  { value: "none", label: "None" },
+  { value: "subtle", label: "Subtle" },
+  { value: "round", label: "Round" },
 ];
 
 const SHADOWS: readonly Option<ShadowId>[] = [
@@ -218,36 +230,38 @@ export function Studio() {
             </Section>
 
             <Section title="Composition">
-              <Slider
-                label="Inset"
-                readout={`${Math.round(composition.inset * 100)}%`}
-                value={composition.inset}
-                min={INSET_RANGE.min}
-                max={INSET_RANGE.max}
-                step={INSET_RANGE.step}
-                onChange={(inset) => patch({ inset })}
-              />
-              <Slider
-                label="Corner"
-                readout={measured ? `${measured.radius} px` : "—"}
-                value={composition.radius}
-                min={RADIUS_RANGE.min}
-                max={RADIUS_RANGE.max}
-                step={RADIUS_RANGE.step}
-                onChange={(radius) => patch({ radius })}
-              />
-              <Segmented
-                label="Shadow"
-                value={composition.shadow}
-                options={SHADOWS}
-                onChange={(shadow) => patch({ shadow })}
-              />
-              <Segmented
-                label="Frame"
-                value={composition.frame}
-                options={FRAMES}
-                onChange={(frame) => patch({ frame })}
-              />
+              <Field label="Inset">
+                <Segmented
+                  label="Inset"
+                  value={composition.inset}
+                  options={INSETS}
+                  onChange={(inset) => patch({ inset })}
+                />
+              </Field>
+              <Field label="Corner">
+                <Segmented
+                  label="Corner"
+                  value={composition.corner}
+                  options={CORNERS}
+                  onChange={(corner) => patch({ corner })}
+                />
+              </Field>
+              <Field label="Shadow">
+                <Segmented
+                  label="Shadow"
+                  value={composition.shadow}
+                  options={SHADOWS}
+                  onChange={(shadow) => patch({ shadow })}
+                />
+              </Field>
+              <Field label="Frame">
+                <Segmented
+                  label="Frame"
+                  value={composition.frame}
+                  options={FRAMES}
+                  onChange={(frame) => patch({ frame })}
+                />
+              </Field>
               {composition.frame === "window" && (
                 <input
                   value={composition.label}
@@ -262,13 +276,15 @@ export function Studio() {
                   )}
                 />
               )}
-              <Segmented
-                label="Format"
-                value={composition.ratio}
-                options={RATIO_OPTIONS}
-                columns={3}
-                onChange={(ratio) => patch({ ratio })}
-              />
+              <Field label="Format">
+                <Segmented
+                  label="Format"
+                  value={composition.ratio}
+                  options={RATIO_OPTIONS}
+                  columns={3}
+                  onChange={(ratio) => patch({ ratio })}
+                />
+              </Field>
             </Section>
           </div>
         </div>

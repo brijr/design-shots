@@ -1,31 +1,48 @@
 export type BackgroundId = "black" | "white";
+export type InsetId = "tight" | "even" | "wide";
+export type CornerId = "none" | "subtle" | "round";
 export type ShadowId = "none" | "soft" | "deep";
 export type FrameId = "none" | "window";
 export type RatioId = "auto" | "16:9" | "3:2" | "4:3" | "1:1" | "4:5";
 
 export interface Composition {
   background: BackgroundId;
-  /** Margin around the artwork, as a fraction of the artwork's long edge. */
-  inset: number;
-  /** Corner radius, as a fraction of the artwork's long edge. */
-  radius: number;
+  inset: InsetId;
+  corner: CornerId;
   shadow: ShadowId;
   frame: FrameId;
   ratio: RatioId;
   scale: 1 | 2;
-  /** Caption shown in the window bar. Usually the captured URL. */
+  /** Caption shown in the window bar. */
   label: string;
 }
 
 export const DEFAULT_COMPOSITION: Composition = {
   background: "white",
-  inset: 0.09,
-  radius: 0.012,
-  shadow: "soft",
+  inset: "even",
+  corner: "subtle",
+  shadow: "none",
   frame: "none",
   ratio: "auto",
   scale: 2,
   label: "",
+};
+
+/**
+ * Three stops each, as fractions of the artwork's long edge. Choosing from a
+ * few good values beats dialling in an arbitrary one — every stop here is a
+ * composition that works, which a continuous slider cannot promise.
+ */
+export const INSETS: Record<InsetId, number> = {
+  tight: 0.045,
+  even: 0.09,
+  wide: 0.18,
+};
+
+export const CORNERS: Record<CornerId, number> = {
+  none: 0,
+  subtle: 0.012,
+  round: 0.03,
 };
 
 export const RATIOS: Record<RatioId, number | null> = {
@@ -36,14 +53,6 @@ export const RATIOS: Record<RatioId, number | null> = {
   "1:1": 1,
   "4:5": 4 / 5,
 };
-
-/**
- * Sizes and positions are stored as fractions of the artwork's long edge so a
- * composition looks identical whether the source is an 800px screenshot or a
- * 3200px retina capture.
- */
-export const INSET_RANGE = { min: 0, max: 0.3, step: 0.005 };
-export const RADIUS_RANGE = { min: 0, max: 0.05, step: 0.001 };
 
 /** Hard ceiling on either output dimension, to keep the canvas sane. */
 const MAX_EDGE = 5000;
@@ -95,7 +104,7 @@ export function layout(art: Artwork, c: Composition): Layout {
   const cardHeight = art.height + barHeight;
   const longEdge = Math.max(cardWidth, cardHeight);
 
-  const pad = Math.round(c.inset * longEdge);
+  const pad = Math.round(INSETS[c.inset] * longEdge);
   let width = cardWidth + pad * 2;
   let height = cardHeight + pad * 2;
 
@@ -122,7 +131,7 @@ export function layout(art: Artwork, c: Composition): Layout {
     cardWidth,
     cardHeight,
     barHeight,
-    radius: Math.round(c.radius * longEdge),
+    radius: Math.round(CORNERS[c.corner] * longEdge),
     longEdge,
   };
 }

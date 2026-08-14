@@ -26,6 +26,27 @@ export function Section({
 
 /* -------------------------------------------------------------------------- */
 
+/**
+ * A named control. Stacked segmented rows look alike, so each one says what it
+ * governs — "None" means something different under Corner than under Shadow.
+ */
+export function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <span className="block text-xs text-muted-foreground">{label}</span>
+      {children}
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+
 type ButtonVariant = "default" | "outline" | "ghost";
 
 export function Button({
@@ -115,40 +136,3 @@ export function Segmented<T extends string>({
   );
 }
 
-/* -------------------------------------------------------------------------- */
-
-export function Slider({
-  label,
-  readout,
-  value,
-  min,
-  max,
-  step,
-  onChange,
-}: {
-  label: string;
-  readout: string;
-  value: number;
-  min: number;
-  max: number;
-  step: number;
-  onChange: (value: number) => void;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <div className="flex items-baseline justify-between">
-        <span className="text-xs text-muted-foreground">{label}</span>
-        <span className="tabular text-xs text-muted-foreground">{readout}</span>
-      </div>
-      <input
-        type="range"
-        aria-label={label}
-        value={value}
-        min={min}
-        max={max}
-        step={step}
-        onChange={(e) => onChange(Number(e.target.value))}
-      />
-    </div>
-  );
-}
