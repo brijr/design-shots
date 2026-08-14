@@ -1,9 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowRight, Check, Copy, Download } from "lucide-react";
+import { Check, Copy, Download } from "lucide-react";
 import { Stage } from "@/components/stage";
-import { Button, Section, Segmented, Slider, type Option } from "@/components/ui";
+import {
+  Button,
+  Section,
+  Segmented,
+  Slider,
+  type Option,
+} from "@/components/ui";
 import {
   DEFAULT_COMPOSITION,
   INSET_RANGE,
@@ -18,8 +24,6 @@ import {
   type ShadowId,
 } from "@/lib/composition";
 import { cn } from "@/lib/utils";
-
-type ViewportId = "desktop" | "tablet" | "mobile";
 
 const BACKGROUNDS: readonly Option<BackgroundId>[] = [
   { value: "white", label: "White", swatch: "#ffffff" },
@@ -46,12 +50,6 @@ const RATIO_OPTIONS: readonly Option<RatioId>[] = [
   { value: "4:5", label: "4:5" },
 ];
 
-const VIEWPORT_OPTIONS: readonly Option<ViewportId>[] = [
-  { value: "desktop", label: "Desktop" },
-  { value: "tablet", label: "Tablet" },
-  { value: "mobile", label: "Mobile" },
-];
-
 const SCALES: readonly Option<"1" | "2">[] = [
   { value: "1", label: "1×" },
   { value: "2", label: "2×" },
@@ -62,9 +60,6 @@ export function Studio() {
   const [density, setDensity] = useState(1);
   const [composition, setComposition] =
     useState<Composition>(DEFAULT_COMPOSITION);
-  const [url, setUrl] = useState("");
-  const [viewport, setViewport] = useState<ViewportId>("desktop");
-  const [busy, setBusy] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -79,80 +74,48 @@ export function Studio() {
     [],
   );
 
-  const loadImage = useCallback(async (src: string, sourceDensity?: number) => {
+  const accept = useCallback(async (files: FileList) => {
+    const file = Array.from(files).find((f) => f.type.startsWith("image/"));
+    if (!file) {
+      setError("That file is not an image.");
+      return;
+    }
+
+    if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+    objectUrlRef.current = URL.createObjectURL(file);
+
     const image = new Image();
-    image.src = src;
-    await image.decode();
-    setDensity(sourceDensity ?? guessDensity(image));
+    image.src = objectUrlRef.current;
+    try {
+      await image.decode();
+    } catch {
+      setError("That image could not be read.");
+      return;
+    }
+
+    setError(null);
+    setDensity(guessDensity(image));
     setArt(image);
   }, []);
 
-  const acceptFiles = useCallback(
-    async (files: FileList) => {
-      const file = Array.from(files).find((f) => f.type.startsWith("image/"));
-      if (!file) {
-        setError("That file is not an image.");
-        return;
-      }
-      if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
-      objectUrlRef.current = URL.createObjectURL(file);
-      setError(null);
-      await loadImage(objectUrlRef.current);
-      patch({ label: "", frame: "none" });
-    },
-    [loadImage, patch],
-  );
-
-  const capture = useCallback(async () => {
-    if (!url.trim() || busy) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const response = await fetch("/api/capture", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ url, viewport }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? "Capture failed.");
-      await loadImage(data.image, 2); // captured at deviceScaleFactor 2
-      // A live site reads as a product shot with its chrome on.
-      patch({ label: data.label, frame: "window" });
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Capture failed.");
-    } finally {
-      setBusy(false);
-    }
-  }, [url, viewport, busy, loadImage, patch]);
-
-  // Paste an image straight onto the stage, or paste a URL into the field.
+  // Paste a screenshot straight onto the stage.
   useEffect(() => {
     const onPaste = (event: ClipboardEvent) => {
-      const data = event.clipboardData;
-      if (!data) return;
-
-      const image = Array.from(data.items).find((item) =>
-        item.type.startsWith("image/"),
+      const item = Array.from(event.clipboardData?.items ?? []).find((i) =>
+        i.type.startsWith("image/"),
       );
-      if (image) {
-        const file = image.getAsFile();
-        if (file) {
-          event.preventDefault();
-          const list = new DataTransfer();
-          list.items.add(file);
-          void acceptFiles(list.files);
-        }
-        return;
-      }
+      const file = item?.getAsFile();
+      if (!file) return;
 
-      const editing = document.activeElement?.tagName === "INPUT";
-      const text = data.getData("text").trim();
-      if (!editing && /^https?:\/\/\S+$/i.test(text)) setUrl(text);
+      event.preventDefault();
+      const list = new DataTransfer();
+      list.items.add(file);
+      void accept(list.files);
     };
 
     window.addEventListener("paste", onPaste);
     return () => window.removeEventListener("paste", onPaste);
-  }, [acceptFiles]);
+  }, [accept]);
 
   useEffect(() => {
     return () => {
@@ -201,9 +164,8 @@ export function Studio() {
         density={density}
         composition={composition}
         canvasRef={canvasRef}
-        busy={busy}
         dragging={dragging}
-        onFiles={acceptFiles}
+        onFiles={accept}
         onDraggingChange={setDragging}
         onPick={() => fileRef.current?.click()}
       />
@@ -220,7 +182,7 @@ export function Studio() {
               onClick={() => {
                 setArt(null);
                 setComposition(DEFAULT_COMPOSITION);
-                setUrl("");
+                setError(null);
               }}
             >
               Clear
@@ -230,45 +192,12 @@ export function Studio() {
 
         <div className="min-h-0 flex-1 space-y-7 overflow-y-auto px-5 py-6">
           <Section title="Source">
-            <div className="flex gap-2">
-              <input
-                value={url}
-                onChange={(event) => setUrl(event.target.value)}
-                onKeyDown={(event) => event.key === "Enter" && capture()}
-                placeholder="example.com"
-                spellCheck={false}
-                autoCapitalize="off"
-                autoCorrect="off"
-                className={cn(
-                  "h-9 min-w-0 flex-1 rounded-md border border-input bg-transparent px-3",
-                  "text-sm placeholder:text-muted-foreground",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                )}
-              />
-              <Button
-                onClick={capture}
-                disabled={!url.trim() || busy}
-                aria-label="Capture URL"
-                className="w-9 px-0"
-              >
-                <ArrowRight className="size-4" />
-              </Button>
-            </div>
-
-            <Segmented
-              label="Capture width"
-              value={viewport}
-              options={VIEWPORT_OPTIONS}
-              onChange={setViewport}
-            />
-
-            <Button
-              className="w-full"
-              onClick={() => fileRef.current?.click()}
-            >
+            <Button className="w-full" onClick={() => fileRef.current?.click()}>
               Upload an image
             </Button>
-
+            <p className="text-xs text-muted-foreground">
+              Or drop one on the stage, or paste from the clipboard.
+            </p>
             {error && <p className="text-xs text-destructive">{error}</p>}
           </Section>
 
@@ -319,6 +248,20 @@ export function Studio() {
                 options={FRAMES}
                 onChange={(frame) => patch({ frame })}
               />
+              {composition.frame === "window" && (
+                <input
+                  value={composition.label}
+                  onChange={(event) => patch({ label: event.target.value })}
+                  placeholder="acme.com"
+                  aria-label="Window caption"
+                  spellCheck={false}
+                  className={cn(
+                    "h-9 w-full rounded-md border border-input bg-transparent px-3",
+                    "text-sm placeholder:text-muted-foreground",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  )}
+                />
+              )}
               <Segmented
                 label="Format"
                 value={composition.ratio}
@@ -378,7 +321,7 @@ export function Studio() {
         accept="image/*"
         className="hidden"
         onChange={(event) => {
-          if (event.target.files?.length) void acceptFiles(event.target.files);
+          if (event.target.files?.length) void accept(event.target.files);
           event.target.value = "";
         }}
       />

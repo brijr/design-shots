@@ -1,14 +1,9 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
-  serverExternalPackages: ["puppeteer-core", "@sparticuz/chromium"],
-
-  // Chromium ships as brotli archives that are resolved at runtime through a
-  // computed path, so file tracing cannot see them. Without this the capture
-  // function deploys without a browser to launch.
-  outputFileTracingIncludes: {
-    "/api/capture": ["./node_modules/@sparticuz/chromium/bin/**"],
-  },
-};
+/**
+ * Nothing to configure. Every composition happens in the browser, so this
+ * ships as static files with no server behind it.
+ */
+const nextConfig: NextConfig = {};
 
 export default nextConfig;

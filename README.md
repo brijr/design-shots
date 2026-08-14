@@ -1,11 +1,15 @@
 # Design Shots
 
-Drop in a screenshot — or point it at a live URL — and get a clean product shot
-back. Black or white, nothing else.
+Drop in a screenshot and get a clean product shot back. Black or white,
+nothing else.
 
 ```bash
 pnpm dev     # http://localhost:3000
 ```
+
+There is no server. No API routes, no database, no environment variables, no
+account. Your image is read by the browser, composed on a canvas in the same
+tab, and handed back to you — it never touches a network.
 
 ## How it works
 
@@ -21,11 +25,11 @@ whether the source is an 800px screenshot or a 3200px retina capture. The panel
 still reports the resolved pixel value, because that is what a designer wants
 to read.
 
-**Density is tracked separately from resolution.** A URL capture is taken at
-`deviceScaleFactor: 2`, so its logical size is half its pixel size. Layout works
-in logical units, which keeps the 1×/2× control honest — 2× means twice the
-source's own resolution, never twice whatever density it happened to arrive at.
-Uploads over 2400px wide are assumed to be retina captures.
+**Density is tracked apart from resolution.** A retina screenshot carries twice
+the pixels of the layout it depicts, so layout works in logical units. That
+keeps the 1×/2× control honest — 2× means twice the source's own resolution,
+never twice whatever density it happened to arrive at. Images over 2400px wide
+are assumed to be retina captures.
 
 **Depth adapts to the background.** A drop shadow cannot read against pure
 black, so on a black background the artwork gets a hairline of light along its
@@ -36,29 +40,9 @@ edge instead. Same control, different honest answer.
 | Path | Role |
 | --- | --- |
 | `lib/composition.ts` | Layout maths and the canvas painter. All output pixels originate here. |
-| `lib/url.ts` | URL normalisation and the private-network guard. |
-| `app/api/capture/route.ts` | Headless Chrome screenshot of a live URL. |
 | `components/stage.tsx` | The canvas, the drop target, the empty state. |
 | `components/studio.tsx` | State and the instrument panel. |
 | `components/ui.tsx` | The four primitives the panel is built from. |
-
-Uploaded and pasted images never leave the browser. Only a URL capture touches
-the server, and only the URL is sent.
-
-## URL capture
-
-`POST /api/capture` runs Puppeteer against a real Chromium.
-
-- **Local** — uses the Chrome already installed on the machine. Override the
-  path with `CHROME_EXECUTABLE_PATH` if it lives somewhere unusual.
-- **Vercel** — falls back to `@sparticuz/chromium`. This works because Vercel
-  Functions now allow package sizes up to 5 GB on Fluid Compute. The route sets
-  `maxDuration = 60`, and `next.config.ts` marks both packages external so they
-  are not bundled.
-
-Requests to `localhost`, `*.local`, and private IP ranges are refused, and the
-hostname is resolved and re-checked before Chrome is launched, so the endpoint
-cannot be pointed at internal services.
 
 ## Design
 
@@ -68,11 +52,22 @@ colour on screen should be the user's own work. Tokens live in
 `text-xs`–`text-xl`; labels are mono and understated, the way markings on an
 instrument are.
 
+## A note on URL capture
+
+An earlier version could screenshot a live URL with headless Chromium. It
+worked, and it was removed on purpose: a public, unauthenticated endpoint that
+boots a browser on demand is an open invitation to spend someone else's money,
+and keeping it meant the privacy claim above had to be qualified. Taking your
+own screenshot costs one keystroke, and paste already works.
+
+The build now emits static files only, so this deploys free anywhere.
+
 ## Deploying
 
 ```bash
 vercel
 ```
 
-Nothing needs configuring. There are no environment variables and no database —
-compositions live in the browser tab and nowhere else.
+## Licence
+
+MIT

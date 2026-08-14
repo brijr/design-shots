@@ -9,7 +9,6 @@ export function Stage({
   density,
   composition,
   canvasRef,
-  busy,
   dragging,
   onFiles,
   onDraggingChange,
@@ -19,7 +18,6 @@ export function Stage({
   density: number;
   composition: Composition;
   canvasRef: RefObject<HTMLCanvasElement | null>;
-  busy: boolean;
   dragging: boolean;
   onFiles: (files: FileList) => void;
   onDraggingChange: (dragging: boolean) => void;
@@ -72,21 +70,13 @@ export function Stage({
             Drop a screenshot
           </span>
           <span className="mt-2 block text-sm text-muted-foreground">
-            Or paste one, or capture a live URL from the panel. Your image never
-            leaves this device — the shot is composed here.
+            Or paste one from the clipboard. Nothing is ever uploaded — there is
+            no server, and the shot is composed in this tab.
           </span>
           <span className="mt-5 inline-flex h-9 items-center rounded-md border border-border px-3 text-sm transition-colors group-hover:bg-muted">
             Choose a file
           </span>
         </button>
-      )}
-
-      {busy && (
-        <div className="absolute inset-0 grid place-items-center bg-stage/80">
-          <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-            Capturing
-          </span>
-        </div>
       )}
     </div>
   );
