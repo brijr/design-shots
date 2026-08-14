@@ -67,9 +67,7 @@ export function Stage({
         <canvas ref={canvasRef} className="max-h-full max-w-full" />
       ) : (
         <div className="max-w-sm px-6 py-10 text-center">
-          <p className="text-xl font-medium tracking-tight">
-            Drop a screenshot
-          </p>
+          <p className="text-xl font-medium tracking-tight">Drop an image</p>
           <p className="mt-2 text-sm text-muted-foreground">
             Or paste one from the clipboard.
           </p>
