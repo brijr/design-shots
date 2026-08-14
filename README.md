@@ -1,36 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Design Shots
 
-## Getting Started
-
-First, run the development server:
+Drop in a screenshot — or point it at a live URL — and get a clean product shot
+back. Black or white, nothing else.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm dev     # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## How it works
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**One renderer, no drift.** `lib/composition.ts` holds a single pure function,
+`paint(ctx, image, composition, layout)`. The canvas you see on the stage is
+rendered at full export resolution and merely scaled down by CSS, so the
+"Save PNG" button just calls `toBlob()` on the canvas already on screen. There
+is no second export path that can disagree with the preview.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**Sizes are fractions, not pixels.** Inset and corner radius are stored as
+fractions of the artwork's long edge. A composition therefore looks identical
+whether the source is an 800px screenshot or a 3200px retina capture. The panel
+still reports the resolved pixel value, because that is what a designer wants
+to read.
 
-## Learn More
+**Density is tracked separately from resolution.** A URL capture is taken at
+`deviceScaleFactor: 2`, so its logical size is half its pixel size. Layout works
+in logical units, which keeps the 1×/2× control honest — 2× means twice the
+source's own resolution, never twice whatever density it happened to arrive at.
+Uploads over 2400px wide are assumed to be retina captures.
 
-To learn more about Next.js, take a look at the following resources:
+**Depth adapts to the background.** A drop shadow cannot read against pure
+black, so on a black background the artwork gets a hairline of light along its
+edge instead. Same control, different honest answer.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Layout
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Path | Role |
+| --- | --- |
+| `lib/composition.ts` | Layout maths and the canvas painter. All output pixels originate here. |
+| `lib/url.ts` | URL normalisation and the private-network guard. |
+| `app/api/capture/route.ts` | Headless Chrome screenshot of a live URL. |
+| `components/stage.tsx` | The canvas, the drop target, the empty state. |
+| `components/studio.tsx` | State and the instrument panel. |
+| `components/ui.tsx` | The four primitives the panel is built from. |
 
-## Deploy on Vercel
+Uploaded and pasted images never leave the browser. Only a URL capture touches
+the server, and only the URL is sent.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## URL capture
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`POST /api/capture` runs Puppeteer against a real Chromium.
+
+- **Local** — uses the Chrome already installed on the machine. Override the
+  path with `CHROME_EXECUTABLE_PATH` if it lives somewhere unusual.
+- **Vercel** — falls back to `@sparticuz/chromium`. This works because Vercel
+  Functions now allow package sizes up to 5 GB on Fluid Compute. The route sets
+  `maxDuration = 60`, and `next.config.ts` marks both packages external so they
+  are not bundled.
+
+Requests to `localhost`, `*.local`, and private IP ranges are refused, and the
+hostname is resolved and re-checked before Chrome is launched, so the endpoint
+cannot be pointed at internal services.
+
+## Design
+
+Grayscale by intent: the interface has no accent colour, because the only
+colour on screen should be the user's own work. Tokens live in
+`app/globals.css` and follow the system theme. Type stays inside
+`text-xs`–`text-xl`; labels are mono and understated, the way markings on an
+instrument are.
+
+## Deploying
+
+```bash
+vercel
+```
+
+Nothing needs configuring. There are no environment variables and no database —
+compositions live in the browser tab and nowhere else.
