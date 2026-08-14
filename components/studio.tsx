@@ -18,16 +18,25 @@ import {
   type BackgroundId,
   type Composition,
   type CornerId,
+  type EdgeId,
   type FrameId,
   type InsetId,
   type RatioId,
   type ShadowId,
 } from "@/lib/composition";
+import { sampleScreenshot } from "@/lib/sample";
 import { cn } from "@/lib/utils";
 
 const BACKGROUNDS: readonly Option<BackgroundId>[] = [
   { value: "white", label: "White", swatch: "#ffffff" },
+  { value: "paper", label: "Paper", swatch: "#f0ede7" },
+  { value: "charcoal", label: "Charcoal", swatch: "#161616" },
   { value: "black", label: "Black", swatch: "#000000" },
+];
+
+const EDGES: readonly Option<EdgeId>[] = [
+  { value: "none", label: "None" },
+  { value: "hairline", label: "Hairline" },
 ];
 
 const INSETS: readonly Option<InsetId>[] = [
@@ -67,6 +76,25 @@ const SCALES: readonly Option<"1" | "2">[] = [
   { value: "2", label: "2×" },
 ];
 
+/**
+ * Shots are made in sets — a launch thread, a changelog. Remembering the
+ * settings (never the image) means the second and third shot match the first
+ * without re-picking anything.
+ */
+const STORAGE_KEY = "design-shots:composition";
+
+function readStored(): Composition | null {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    // Spread over the defaults so a stored shape from an older build, missing
+    // keys added since, still yields a complete composition.
+    return { ...DEFAULT_COMPOSITION, ...JSON.parse(raw), label: "" };
+  } catch {
+    return null;
+  }
+}
+
 export function Studio() {
   const [art, setArt] = useState<HTMLImageElement | null>(null);
   const [density, setDensity] = useState(1);
@@ -79,6 +107,7 @@ export function Studio() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const objectUrlRef = useRef<string | null>(null);
+  const restored = useRef(false);
 
   const patch = useCallback(
     (next: Partial<Composition>) =>
@@ -86,29 +115,62 @@ export function Studio() {
     [],
   );
 
-  const accept = useCallback(async (files: FileList) => {
-    const file = Array.from(files).find((f) => f.type.startsWith("image/"));
-    if (!file) {
-      setError("That file is not an image.");
-      return;
-    }
-
-    if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
-    objectUrlRef.current = URL.createObjectURL(file);
-
-    const image = new Image();
-    image.src = objectUrlRef.current;
-    try {
-      await image.decode();
-    } catch {
-      setError("That image could not be read.");
-      return;
-    }
-
-    setError(null);
-    setDensity(guessDensity(image));
-    setArt(image);
+  // Remembered settings are applied when an image arrives, not on mount. The
+  // panel is inert until then, so there is nothing to restore them into — and
+  // reading storage during render would desync the prerendered markup.
+  const restoreSettings = useCallback(() => {
+    if (restored.current) return;
+    restored.current = true;
+    const saved = readStored();
+    if (saved) setComposition(saved);
   }, []);
+
+  const accept = useCallback(
+    async (files: FileList) => {
+      const file = Array.from(files).find((f) => f.type.startsWith("image/"));
+      if (!file) {
+        setError("That file is not an image.");
+        return;
+      }
+
+      if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = URL.createObjectURL(file);
+
+      const image = new Image();
+      image.src = objectUrlRef.current;
+      try {
+        await image.decode();
+      } catch {
+        setError("That image could not be read.");
+        return;
+      }
+
+      restoreSettings();
+      setError(null);
+      setDensity(guessDensity(image));
+      setArt(image);
+    },
+    [restoreSettings],
+  );
+
+  const loadExample = useCallback(async () => {
+    const image = new Image();
+    image.src = sampleScreenshot();
+    await image.decode();
+    restoreSettings();
+    setError(null);
+    setDensity(1);
+    setArt(image);
+  }, [restoreSettings]);
+
+  useEffect(() => {
+    if (!restored.current) return;
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(composition));
+    } catch {
+      // Private browsing or a full quota. Losing the preference is survivable.
+    }
+  }, [composition]);
 
   // Paste a screenshot straight onto the stage.
   useEffect(() => {
@@ -142,7 +204,7 @@ export function Studio() {
         : resolve(null),
     );
 
-  const save = async () => {
+  const save = useCallback(async () => {
     const blob = await toBlob();
     if (!blob) return;
     const href = URL.createObjectURL(blob);
@@ -151,9 +213,9 @@ export function Studio() {
     anchor.download = `${slug(composition.label)}.png`;
     anchor.click();
     URL.revokeObjectURL(href);
-  };
+  }, [composition.label]);
 
-  const copy = async () => {
+  const copy = useCallback(async () => {
     const blob = await toBlob();
     if (!blob) return;
     try {
@@ -165,7 +227,30 @@ export function Studio() {
     } catch {
       setError("This browser will not allow copying images.");
     }
-  };
+  }, []);
+
+  // ⌘C and ⌘S. Both defer to the browser when the user is typing or has text
+  // selected — hijacking copy out from under a selection would be hostile.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!art || !(event.metaKey || event.ctrlKey)) return;
+
+      const key = event.key.toLowerCase();
+      if (key !== "c" && key !== "s") return;
+
+      const typing = ["INPUT", "TEXTAREA"].includes(
+        document.activeElement?.tagName ?? "",
+      );
+      if (typing) return;
+      if (key === "c" && window.getSelection()?.toString()) return;
+
+      event.preventDefault();
+      void (key === "c" ? copy() : save());
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [art, copy, save]);
 
   const measured = art ? layout(artworkOf(art, density), composition) : null;
 
@@ -180,6 +265,7 @@ export function Studio() {
         onFiles={accept}
         onDraggingChange={setDragging}
         onPick={() => fileRef.current?.click()}
+        onExample={loadExample}
       />
 
       <aside className="flex shrink-0 flex-col border-border md:w-[300px] md:border-l">
@@ -213,18 +299,19 @@ export function Studio() {
             {error && <p className="text-xs text-destructive">{error}</p>}
           </Section>
 
+          {/* `inert` blocks focus and pointer in one attribute, and unlike
+              aria-hidden it does not leave tabbable controls inside a subtree
+              screen readers are told does not exist. */}
           <div
-            className={cn(
-              "space-y-7 transition-opacity",
-              !art && "pointer-events-none opacity-40 select-none",
-            )}
-            aria-hidden={!art}
+            className={cn("space-y-7 transition-opacity", !art && "opacity-40")}
+            inert={!art}
           >
             <Section title="Background">
               <Segmented
                 label="Background"
                 value={composition.background}
                 options={BACKGROUNDS}
+                columns={2}
                 onChange={(background) => patch({ background })}
               />
             </Section>
@@ -244,6 +331,14 @@ export function Studio() {
                   value={composition.corner}
                   options={CORNERS}
                   onChange={(corner) => patch({ corner })}
+                />
+              </Field>
+              <Field label="Edge">
+                <Segmented
+                  label="Edge"
+                  value={composition.edge}
+                  options={EDGES}
+                  onChange={(edge) => patch({ edge })}
                 />
               </Field>
               <Field label="Shadow">
@@ -305,27 +400,35 @@ export function Studio() {
                 : "—"}
             </span>
           </div>
-          <div className="flex gap-2">
+          {/* Copy leads: a shot bound for a post or a thread goes straight to
+              the clipboard and never touches the filesystem. */}
+          <div className="space-y-2">
             <Button
               variant="default"
-              className="flex-1"
+              className="w-full justify-between"
+              onClick={copy}
+              disabled={!art}
+            >
+              <span className="flex items-center gap-2">
+                {copied ? (
+                  <Check className="size-4" />
+                ) : (
+                  <Copy className="size-4" />
+                )}
+                {copied ? "Copied" : "Copy image"}
+              </span>
+              <Shortcut>⌘C</Shortcut>
+            </Button>
+            <Button
+              className="w-full justify-between"
               onClick={save}
               disabled={!art}
             >
-              <Download className="size-4" />
-              Save PNG
-            </Button>
-            <Button
-              onClick={copy}
-              disabled={!art}
-              aria-label="Copy to clipboard"
-              className="w-9 px-0"
-            >
-              {copied ? (
-                <Check className="size-4" />
-              ) : (
-                <Copy className="size-4" />
-              )}
+              <span className="flex items-center gap-2">
+                <Download className="size-4" />
+                Save PNG
+              </span>
+              <Shortcut>⌘S</Shortcut>
             </Button>
           </div>
         </div>
@@ -342,6 +445,14 @@ export function Studio() {
         }}
       />
     </main>
+  );
+}
+
+function Shortcut({ children }: { children: string }) {
+  return (
+    <span className="font-mono text-[10px] tracking-wider opacity-50">
+      {children}
+    </span>
   );
 }
 

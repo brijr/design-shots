@@ -1,6 +1,6 @@
 "use client";
 
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { useRef, type ButtonHTMLAttributes, type KeyboardEvent, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /* -------------------------------------------------------------------------- */
@@ -96,10 +96,37 @@ export function Segmented<T extends string>({
   label?: string;
 }) {
   const cols = columns ?? options.length;
+  const group = useRef<HTMLDivElement>(null);
+
+  // A radiogroup is driven with arrow keys, not by tabbing through every
+  // option. Without this, reaching the last control means ~20 tab stops.
+  const step = (delta: number) => {
+    const from = options.findIndex((o) => o.value === value);
+    const next = (from + delta + options.length) % options.length;
+    onChange(options[next].value);
+    group.current
+      ?.querySelectorAll<HTMLButtonElement>('[role="radio"]')
+      [next]?.focus();
+  };
+
+  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    const delta =
+      event.key === "ArrowRight" || event.key === "ArrowDown"
+        ? 1
+        : event.key === "ArrowLeft" || event.key === "ArrowUp"
+          ? -1
+          : 0;
+    if (!delta) return;
+    event.preventDefault();
+    step(delta);
+  };
+
   return (
     <div
+      ref={group}
       role="radiogroup"
       aria-label={label}
+      onKeyDown={onKeyDown}
       className="grid overflow-hidden rounded-md border border-border"
       style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
     >
@@ -110,6 +137,7 @@ export function Segmented<T extends string>({
             key={option.value}
             role="radio"
             aria-checked={active}
+            tabIndex={active ? 0 : -1}
             onClick={() => onChange(option.value)}
             className={cn(
               "flex h-9 items-center justify-center gap-1.5 px-2 text-xs transition-colors",

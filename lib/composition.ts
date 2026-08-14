@@ -1,6 +1,7 @@
-export type BackgroundId = "black" | "white";
+export type BackgroundId = "white" | "paper" | "charcoal" | "black";
 export type InsetId = "tight" | "even" | "wide";
 export type CornerId = "none" | "subtle" | "round";
+export type EdgeId = "none" | "hairline";
 export type ShadowId = "none" | "soft" | "deep";
 export type FrameId = "none" | "window";
 export type RatioId = "auto" | "16:9" | "3:2" | "4:3" | "1:1" | "4:5";
@@ -9,6 +10,7 @@ export interface Composition {
   background: BackgroundId;
   inset: InsetId;
   corner: CornerId;
+  edge: EdgeId;
   shadow: ShadowId;
   frame: FrameId;
   ratio: RatioId;
@@ -21,6 +23,7 @@ export const DEFAULT_COMPOSITION: Composition = {
   background: "white",
   inset: "even",
   corner: "subtle",
+  edge: "hairline",
   shadow: "none",
   frame: "none",
   ratio: "auto",
@@ -136,6 +139,11 @@ export function layout(art: Artwork, c: Composition): Layout {
   };
 }
 
+/**
+ * Four neutrals, no accent. `edge` is the hairline drawn along the artwork's
+ * own boundary — the only thing separating a white screenshot from a white
+ * background, or a dark one from black.
+ */
 const SURFACE = {
   white: {
     page: "#ffffff",
@@ -144,6 +152,25 @@ const SURFACE = {
     dot: "#d2d2d2",
     caption: "#9b9b9b",
     plate: "#ffffff",
+    edge: "rgba(0,0,0,0.13)",
+  },
+  paper: {
+    page: "#f0ede7",
+    bar: "#e8e4dc",
+    hairline: "#dad5cb",
+    dot: "#c9c3b7",
+    caption: "#948d80",
+    plate: "#ffffff",
+    edge: "rgba(0,0,0,0.12)",
+  },
+  charcoal: {
+    page: "#161616",
+    bar: "#232323",
+    hairline: "#303030",
+    dot: "#3f3f3f",
+    caption: "#767676",
+    plate: "#0f0f0f",
+    edge: "rgba(255,255,255,0.11)",
   },
   black: {
     page: "#000000",
@@ -152,13 +179,14 @@ const SURFACE = {
     dot: "#3a3a3a",
     caption: "#6f6f6f",
     plate: "#0e0e0e",
+    edge: "rgba(255,255,255,0.12)",
   },
 } as const;
 
 const SHADOW = {
-  none: { blur: 0, offset: 0, alpha: 0, ring: 0 },
-  soft: { blur: 0.055, offset: 0.026, alpha: 0.18, ring: 0.08 },
-  deep: { blur: 0.115, offset: 0.058, alpha: 0.26, ring: 0.14 },
+  none: { blur: 0, offset: 0, alpha: 0 },
+  soft: { blur: 0.055, offset: 0.026, alpha: 0.18 },
+  deep: { blur: 0.115, offset: 0.058, alpha: 0.26 },
 } as const;
 
 /**
@@ -186,11 +214,7 @@ export function paint(
     ctx.roundRect(l.cardX, l.cardY, l.cardWidth, l.cardHeight, l.radius);
   };
 
-  // A drop shadow cannot read against pure black, so depth there is carried by
-  // a hairline of light along the artwork's edge instead.
-  const onBlack = c.background === "black";
-
-  if (c.shadow !== "none" && !onBlack) {
+  if (c.shadow !== "none") {
     ctx.save();
     ctx.shadowColor = `rgba(0,0,0,${shadow.alpha})`;
     ctx.shadowBlur = shadow.blur * l.longEdge;
@@ -221,9 +245,9 @@ export function paint(
   );
   ctx.restore();
 
-  if (c.shadow !== "none" && onBlack) {
+  if (c.edge === "hairline") {
     ctx.save();
-    ctx.strokeStyle = `rgba(255,255,255,${shadow.ring})`;
+    ctx.strokeStyle = skin.edge;
     ctx.lineWidth = Math.max(1, l.longEdge * 0.0009);
     card();
     ctx.stroke();

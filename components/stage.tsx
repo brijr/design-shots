@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, type RefObject } from "react";
+import { Button } from "@/components/ui";
 import { artworkOf, layout, paint, type Composition } from "@/lib/composition";
 import { cn } from "@/lib/utils";
 
@@ -13,6 +14,7 @@ export function Stage({
   onFiles,
   onDraggingChange,
   onPick,
+  onExample,
 }: {
   art: HTMLImageElement | null;
   density: number;
@@ -22,6 +24,7 @@ export function Stage({
   onFiles: (files: FileList) => void;
   onDraggingChange: (dragging: boolean) => void;
   onPick: () => void;
+  onExample: () => void;
 }) {
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -57,26 +60,26 @@ export function Stage({
       )}
     >
       {art ? (
-        <canvas
-          ref={canvasRef}
-          className="max-h-full max-w-full rounded-[1px] ring-1 ring-border"
-        />
+        // No ring, no border. Anything drawn around the canvas here would be
+        // chrome the exported PNG does not have, and the preview must not
+        // flatter the file.
+        <canvas ref={canvasRef} className="max-h-full max-w-full" />
       ) : (
-        <button
-          onClick={onPick}
-          className="group max-w-sm rounded-md px-6 py-10 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <span className="block text-xl font-medium tracking-tight">
+        <div className="max-w-sm px-6 py-10 text-center">
+          <p className="text-xl font-medium tracking-tight">
             Drop a screenshot
-          </span>
-          <span className="mt-2 block text-sm text-muted-foreground">
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">
             Or paste one from the clipboard. Nothing is ever uploaded — there is
             no server, and the shot is composed in this tab.
-          </span>
-          <span className="mt-5 inline-flex h-9 items-center rounded-md border border-border px-3 text-sm transition-colors group-hover:bg-muted">
-            Choose a file
-          </span>
-        </button>
+          </p>
+          <div className="mt-5 flex items-center justify-center gap-2">
+            <Button onClick={onPick}>Choose a file</Button>
+            <Button variant="ghost" onClick={onExample}>
+              Try an example
+            </Button>
+          </div>
+        </div>
       )}
     </div>
   );
