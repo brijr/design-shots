@@ -5,7 +5,14 @@ import puppeteer, { type Browser } from "puppeteer-core";
 import { displayUrl, isPrivateHost, normalizeUrl } from "@/lib/url";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 120;
+
+/**
+ * Our own budget, kept well under `maxDuration` so a slow page comes back as a
+ * sentence the user can act on rather than a platform timeout.
+ */
+const NAVIGATION_BUDGET = 20_000;
+const SETTLE_BUDGET = 6_000;
 
 const VIEWPORTS = {
   desktop: { width: 1440, height: 900 },
@@ -40,6 +47,8 @@ async function launch(): Promise<Browser> {
   }
 
   const chromium = (await import("@sparticuz/chromium")).default;
+  // Screenshots need no WebGL, and skipping swiftshader cuts the cold start.
+  chromium.setGraphicsMode = false;
   return puppeteer.launch({
     args: [...chromium.args, "--hide-scrollbars"],
     executablePath: await chromium.executablePath(),
@@ -83,14 +92,18 @@ export async function POST(request: Request) {
     );
 
     const response = await page.goto(url.toString(), {
-      waitUntil: "networkidle2",
-      timeout: 30_000,
+      waitUntil: "domcontentloaded",
+      timeout: NAVIGATION_BUDGET,
     });
     if (!response) return fail("The page did not respond.", 502);
 
-    // Let webfonts settle and give lazy hero imagery a moment to arrive.
-    await page.evaluate(() => document.fonts?.ready);
-    await new Promise((r) => setTimeout(r, 600));
+    // Marketing pages poll, stream, and animate, so network idle may never
+    // arrive. Wait for quiet if it comes, and shoot the page as-is if it does
+    // not — a slightly early screenshot beats no screenshot.
+    await page
+      .waitForNetworkIdle({ idleTime: 500, timeout: SETTLE_BUDGET })
+      .catch(() => {});
+    await page.evaluate(() => document.fonts?.ready).catch(() => {});
 
     const shot = await page.screenshot({
       type: "png",
