@@ -1,0 +1,21 @@
+@import "tailwindcss";
+@import "@design-tools/theme/tokens.css";
+
+/* Tailwind skips node_modules and gitignored paths when detecting classes, so
+   the shared primitives must be registered explicitly or they ship unstyled. */
+@source "../../../packages/ui/src";
+
+/* The one token this tool adds: the field its artboard sits on. */
+:root {
+  --stage: oklch(0.955 0 0);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --stage: oklch(0.135 0 0);
+  }
+}
+
+@theme inline {
+  --color-stage: var(--stage);
+}

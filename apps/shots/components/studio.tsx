@@ -3,13 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, Copy, Download } from "lucide-react";
 import { Stage } from "@/components/stage";
-import {
-  Button,
-  Field,
-  Section,
-  Segmented,
-  type Option,
-} from "@/components/ui";
+import { Button } from "@design-tools/ui/button";
+import { Field } from "@design-tools/ui/field";
+import { Section } from "@design-tools/ui/section";
+import { Segmented, type Option } from "@design-tools/ui/segmented";
 import {
   DEFAULT_COMPOSITION,
   artworkOf,
@@ -25,7 +22,7 @@ import {
   type RatioId,
   type ShadowId,
 } from "@/lib/composition";
-import { cn } from "@/lib/utils";
+import { cn } from "@design-tools/ui/cn";
 
 const BACKGROUNDS: readonly Option<BackgroundId>[] = [
   { value: "white", label: "White", swatch: "#ffffff" },

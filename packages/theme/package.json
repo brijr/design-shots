@@ -1,0 +1,7 @@
+{
+  "name": "@design-tools/theme",
+  "version": "0.0.0",
+  "private": true,
+  "style": "./tokens.css",
+  "files": ["tokens.css"]
+}

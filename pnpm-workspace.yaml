@@ -1,0 +1,24 @@
+packages:
+  - apps/*
+  - packages/*
+
+# One version of everything, everywhere. An app's package.json says
+# "next": "catalog:" and never a number, so bumping Next across every tool is a
+# one-line edit here plus `pnpm install`. This is what keeps ten tools from
+# quietly becoming ten different stacks.
+catalog:
+  "@tailwindcss/postcss": ^4.3.3
+  "@types/node": ^20.19.43
+  "@types/react": ^19.2.18
+  "@types/react-dom": ^19.2.4
+  "@vercel/analytics": ^2.0.1
+  clsx: ^2.1.1
+  eslint: ^9.39.5
+  eslint-config-next: 16.3.1
+  lucide-react: ^1.31.0
+  next: 16.3.1
+  react: 19.2.8
+  react-dom: 19.2.8
+  tailwind-merge: ^3.6.0
+  tailwindcss: ^4.3.3
+  typescript: ^5

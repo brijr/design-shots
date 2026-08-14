@@ -1,9 +1,12 @@
-@import "tailwindcss";
-
 /* ---------------------------------------------------------------------------
-   Tokens. Neutral, low-contrast, system-honest. Grayscale by design —
-   there is no accent colour in this product; colour is reserved for the
-   user's own work sitting on the stage.
+   The token contract every tool implements.
+
+   Neutral, low-contrast, system-honest. Grayscale by design — no tool in this
+   repo carries an accent colour, because the only colour on screen should be
+   the user's own work.
+
+   Import this AFTER `@import "tailwindcss"` — the `@theme inline` block below
+   depends on Tailwind's theme layer existing.
 --------------------------------------------------------------------------- */
 
 :root {
@@ -30,9 +33,6 @@
 
   --destructive: oklch(0.52 0.16 26);
   --destructive-foreground: oklch(0.985 0 0);
-
-  /* the field the artboard sits on */
-  --stage: oklch(0.955 0 0);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -58,8 +58,6 @@
 
     --destructive: oklch(0.6 0.15 26);
     --destructive-foreground: oklch(0.165 0 0);
-
-    --stage: oklch(0.135 0 0);
   }
 }
 
@@ -79,7 +77,6 @@
   --color-ring: var(--ring);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
-  --color-stage: var(--stage);
 
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
@@ -96,7 +93,7 @@ body {
   font-feature-settings: "cv11", "ss01";
 }
 
-/* Numerals in the instrument panel never jitter while dragging. */
+/* Numerals in an instrument panel should never jitter as values change. */
 .tabular {
   font-variant-numeric: tabular-nums;
 }
@@ -105,4 +102,3 @@ body {
   background: var(--foreground);
   color: var(--background);
 }
-

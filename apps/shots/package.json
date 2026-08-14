@@ -1,0 +1,32 @@
+{
+  "name": "shots",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "check": "next typegen && tsc --noEmit"
+  },
+  "dependencies": {
+    "@design-tools/theme": "workspace:*",
+    "@design-tools/ui": "workspace:*",
+    "@vercel/analytics": "catalog:",
+    "lucide-react": "catalog:",
+    "next": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@design-tools/eslint-config": "workspace:*",
+    "@design-tools/typescript-config": "workspace:*",
+    "@tailwindcss/postcss": "catalog:",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "eslint": "catalog:",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:"
+  }
+}

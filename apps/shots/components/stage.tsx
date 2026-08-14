@@ -2,9 +2,9 @@
 
 import { useEffect, type RefObject } from "react";
 import { ArrowUpRight } from "lucide-react";
-import { Button } from "@/components/ui";
+import { Button } from "@design-tools/ui/button";
 import { artworkOf, layout, paint, type Composition } from "@/lib/composition";
-import { cn } from "@/lib/utils";
+import { cn } from "@design-tools/ui/cn";
 
 export function Stage({
   art,

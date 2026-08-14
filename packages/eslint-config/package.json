@@ -1,0 +1,13 @@
+{
+  "name": "@design-tools/eslint-config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./next": "./next.js",
+    "./react-library": "./react-library.js"
+  },
+  "dependencies": {
+    "eslint-config-next": "catalog:"
+  }
+}

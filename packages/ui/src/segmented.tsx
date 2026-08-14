@@ -1,87 +1,19 @@
 "use client";
 
-import { useRef, type ButtonHTMLAttributes, type KeyboardEvent, type ReactNode } from "react";
-import { cn } from "@/lib/utils";
-
-/* -------------------------------------------------------------------------- */
-
-export function Section({
-  title,
-  children,
-  className,
-}: {
-  title: string;
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <section className={cn("space-y-3", className)}>
-      <h2 className="font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-        {title}
-      </h2>
-      {children}
-    </section>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-
-/**
- * A named control. Stacked segmented rows look alike, so each one says what it
- * governs — "None" means something different under Corner than under Shadow.
- */
-export function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <span className="block text-xs text-muted-foreground">{label}</span>
-      {children}
-    </div>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-
-type ButtonVariant = "default" | "outline" | "ghost";
-
-export function Button({
-  variant = "outline",
-  className,
-  ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant }) {
-  return (
-    <button
-      {...props}
-      className={cn(
-        "inline-flex h-9 items-center justify-center gap-2 rounded-md px-3",
-        "text-sm font-medium whitespace-nowrap transition-colors",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        "disabled:pointer-events-none disabled:opacity-40",
-        variant === "default" &&
-          "bg-primary text-primary-foreground hover:bg-primary/90",
-        variant === "outline" &&
-          "border border-border text-foreground hover:bg-muted",
-        variant === "ghost" && "text-muted-foreground hover:text-foreground",
-        className,
-      )}
-    />
-  );
-}
-
-/* -------------------------------------------------------------------------- */
+import { useRef, type KeyboardEvent } from "react";
+import { cn } from "./cn";
 
 export interface Option<T extends string> {
   value: T;
   label: string;
-  /** Colour chip rendered ahead of the label, for the background picker. */
+  /** Colour chip rendered ahead of the label, for pickers. */
   swatch?: string;
 }
 
+/**
+ * A few named stops instead of a continuous range. Every stop is a value that
+ * works, which a slider cannot promise.
+ */
 export function Segmented<T extends string>({
   value,
   options,
@@ -168,4 +100,3 @@ export function Segmented<T extends string>({
     </div>
   );
 }
-
