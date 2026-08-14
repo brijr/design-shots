@@ -23,7 +23,7 @@ export const DEFAULT_COMPOSITION: Composition = {
   background: "white",
   inset: "even",
   corner: "subtle",
-  edge: "hairline",
+  edge: "none",
   shadow: "none",
   frame: "none",
   ratio: "auto",
