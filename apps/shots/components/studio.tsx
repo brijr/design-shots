@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Check, Copy, Download } from "lucide-react";
+import { Check, Copy, Download, SlidersHorizontal } from "lucide-react";
+import { Sheet } from "@/components/sheet";
 import { Stage } from "@/components/stage";
 import { Button } from "@design-tools/ui/button";
 import { Field } from "@design-tools/ui/field";
@@ -95,6 +96,7 @@ export function Studio() {
   const [composition, setComposition] =
     useState<Composition>(DEFAULT_COMPOSITION);
   const [dragging, setDragging] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -255,47 +257,25 @@ export function Studio() {
 
   const measured = art ? layout(artworkOf(art, density), composition) : null;
 
-  return (
-    <main className="flex h-dvh flex-col md:flex-row">
-      <Stage
-        art={art}
-        density={density}
-        composition={composition}
-        canvasRef={canvasRef}
-        dragging={dragging}
-        onFiles={accept}
-        onDraggingChange={setDragging}
-        onPick={() => fileRef.current?.click()}
-        onExample={loadExample}
-      />
+  const clear = () => {
+    setArt(null);
+    setComposition(DEFAULT_COMPOSITION);
+    setError(null);
+  };
 
-      <aside className="flex shrink-0 flex-col border-border md:w-[300px] md:border-l">
-        <header className="flex h-14 shrink-0 items-center justify-between border-y border-border px-5 md:border-t-0">
-          <span className="text-sm font-medium tracking-tight">
-            Design Shots
-          </span>
-          {art && (
-            <Button
-              variant="ghost"
-              className="-mr-3 h-8 text-xs"
-              onClick={() => {
-                setArt(null);
-                setComposition(DEFAULT_COMPOSITION);
-                setError(null);
-              }}
-            >
-              Clear
-            </Button>
-          )}
-        </header>
-
-        <div className="min-h-0 flex-1 space-y-7 overflow-y-auto px-5 py-6">
-          <Section title="Source">
+  // Written once, rendered into the sidebar on desktop and the sheet on the
+  // phone. Two containers, one set of controls.
+  const controls = (
+    <>
+      <Section title="Source">
             <Button className="w-full" onClick={() => fileRef.current?.click()}>
               Upload an image
             </Button>
             <p className="text-xs text-muted-foreground">
-              Or drop one on the stage, or paste from the clipboard.
+              <span className="hidden md:inline">
+                Or drop one on the stage, or paste from the clipboard.
+              </span>
+              <span className="md:hidden">Or paste one from the clipboard.</span>
             </p>
             {error && <p className="text-xs text-destructive">{error}</p>}
           </Section>
@@ -383,10 +363,12 @@ export function Studio() {
               </Field>
             </Section>
           </div>
-        </div>
+    </>
+  );
 
-        <div className="shrink-0 space-y-3 border-t border-border px-5 py-4">
-          <div className="flex items-center justify-between">
+  const exportActions = (
+    <>
+      <div className="flex items-center justify-between">
             <Segmented
               label="Resolution"
               value={String(composition.scale) as "1" | "2"}
@@ -432,8 +414,78 @@ export function Studio() {
               <Shortcut>⌘S</Shortcut>
             </Button>
           </div>
+    </>
+  );
+
+  return (
+    <main className="flex h-dvh flex-col md:flex-row">
+      {/* On the phone the wordmark and Clear get their own slim bar, because
+          the sidebar that used to hold them is now a sheet. */}
+      <header className="flex h-12 shrink-0 items-center justify-between border-b border-border px-4 md:hidden">
+        <span className="text-sm font-medium tracking-tight">Design Shots</span>
+        {art && (
+          <Button variant="ghost" className="-mr-2 h-11 text-xs" onClick={clear}>
+            Clear
+          </Button>
+        )}
+      </header>
+
+      <Stage
+        art={art}
+        density={density}
+        composition={composition}
+        canvasRef={canvasRef}
+        dragging={dragging}
+        onFiles={accept}
+        onDraggingChange={setDragging}
+        onPick={() => fileRef.current?.click()}
+        onExample={loadExample}
+      />
+
+      {/* The phone's two verbs. Everything else is one tap away in the sheet. */}
+      <div className="flex shrink-0 items-center gap-2 border-t border-border px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:hidden">
+        <Button className="flex-1" onClick={() => setSheetOpen(true)}>
+          <SlidersHorizontal className="size-4" />
+          Adjust
+        </Button>
+        <Button
+          variant="default"
+          className="flex-1"
+          onClick={copy}
+          disabled={!art}
+        >
+          {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+          {copied ? "Copied" : "Copy"}
+        </Button>
+      </div>
+
+      <aside className="hidden shrink-0 flex-col border-border md:flex md:w-[300px] md:border-l">
+        <header className="flex h-14 shrink-0 items-center justify-between border-b border-border px-5">
+          <span className="text-sm font-medium tracking-tight">
+            Design Shots
+          </span>
+          {art && (
+            <Button variant="ghost" className="-mr-3 h-8 text-xs" onClick={clear}>
+              Clear
+            </Button>
+          )}
+        </header>
+        <div className="min-h-0 flex-1 space-y-7 overflow-y-auto px-5 py-6">
+          {controls}
+        </div>
+        <div className="shrink-0 space-y-3 border-t border-border px-5 py-4">
+          {exportActions}
         </div>
       </aside>
+
+      <Sheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        title="Adjust"
+        footer={exportActions}
+      >
+        {controls}
+      </Sheet>
 
       <input
         ref={fileRef}
@@ -450,8 +502,9 @@ export function Studio() {
 }
 
 function Shortcut({ children }: { children: string }) {
+  // Hidden on touch: there is no keyboard to press it with.
   return (
-    <span className="font-mono text-[10px] tracking-wider opacity-50">
+    <span className="hidden font-mono text-[10px] tracking-wider opacity-50 md:inline">
       {children}
     </span>
   );

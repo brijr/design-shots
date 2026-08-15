@@ -18,7 +18,8 @@ export function Button({
     <button
       {...props}
       className={cn(
-        "inline-flex h-9 items-center justify-center gap-2 rounded-md px-3",
+        // 44px on touch (the iOS floor), 36px once there is a pointer.
+        "inline-flex h-11 items-center justify-center gap-2 rounded-md px-3 md:h-9",
         "text-sm font-medium whitespace-nowrap transition-colors",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         "disabled:pointer-events-none disabled:opacity-40",

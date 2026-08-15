@@ -76,7 +76,7 @@ export function Segmented<T extends string>({
             tabIndex={active ? 0 : -1}
             onClick={() => onChange(option.value)}
             className={cn(
-              "flex h-9 items-center gap-2 text-xs transition-colors",
+              "flex h-11 items-center gap-2 text-xs transition-colors md:h-9",
               aligned ? "justify-start px-3" : "justify-center px-2",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
               i % cols !== 0 && "border-l border-border",
