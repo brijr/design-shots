@@ -20,12 +20,15 @@ export function Segmented<T extends string>({
   onChange,
   columns,
   label,
+  compact = false,
 }: {
   value: T;
   options: readonly Option<T>[];
   onChange: (value: T) => void;
   columns?: number;
   label?: string;
+  /** Shorter, for secondary controls that sit beside a primary action. */
+  compact?: boolean;
 }) {
   const cols = columns ?? options.length;
   const group = useRef<HTMLDivElement>(null);
@@ -76,7 +79,8 @@ export function Segmented<T extends string>({
             tabIndex={active ? 0 : -1}
             onClick={() => onChange(option.value)}
             className={cn(
-              "flex h-11 items-center gap-2 text-xs transition-colors md:h-9",
+              "flex items-center gap-2 text-xs transition-colors",
+              compact ? "h-9 md:h-8" : "h-11 md:h-9",
               aligned ? "justify-start px-3" : "justify-center px-2",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
               i % cols !== 0 && "border-l border-border",

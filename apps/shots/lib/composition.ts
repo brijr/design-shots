@@ -27,7 +27,7 @@ export interface Composition {
   shadow: ShadowId;
   frame: FrameId;
   ratio: RatioId;
-  scale: 1 | 2;
+  scale: 1 | 2 | 3;
   /** Caption shown in the window bar. */
   label: string;
 }
@@ -109,13 +109,20 @@ export function sanitizeComposition(raw: unknown): Composition {
     shadow: pick("shadow", SHADOW_IDS),
     frame: pick("frame", FRAME_IDS),
     ratio: pick("ratio", RATIO_IDS),
-    scale: input.scale === 1 ? 1 : 2,
+    scale: input.scale === 1 || input.scale === 3 ? input.scale : 2,
     label: "",
   };
 }
 
 /** Hard ceiling on either output dimension, to keep the canvas sane. */
 const MAX_EDGE = 5000;
+/**
+ * And a ceiling on total pixels: 4096², the allocation limit mobile Safari has
+ * historically enforced. An edge cap alone does not catch a squarish shot,
+ * which can sit inside it and still ask for 25 megapixels — and a canvas that
+ * fails to allocate exports blank rather than erroring.
+ */
+const MAX_AREA = 16_777_216;
 
 export interface Layout {
   /** Output size in CSS-independent design units (before `scale`). */
@@ -189,6 +196,7 @@ export function layout(art: Artwork, c: Composition): Layout {
   const effectiveScale = Math.min(
     c.scale,
     MAX_EDGE / Math.max(width, height),
+    Math.sqrt(MAX_AREA / (width * height)),
   );
 
   return {

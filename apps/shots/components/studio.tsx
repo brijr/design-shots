@@ -76,9 +76,10 @@ const RATIO_OPTIONS: readonly Option<RatioId>[] = [
   { value: "4:5", label: "4:5" },
 ];
 
-const SCALES: readonly Option<"1" | "2">[] = [
+const SCALES: readonly Option<"1" | "2" | "3">[] = [
   { value: "1", label: "1×" },
   { value: "2", label: "2×" },
+  { value: "3", label: "3×" },
 ];
 
 /**
@@ -386,7 +387,8 @@ export function Studio() {
       <div className="flex items-center justify-between">
             <Segmented
               label="Resolution"
-              value={String(composition.scale) as "1" | "2"}
+              compact
+              value={String(composition.scale) as "1" | "2" | "3"}
               options={SCALES}
               onChange={(scale) =>
                 patch({ scale: Number(scale) as Composition["scale"] })
