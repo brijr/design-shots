@@ -2,6 +2,7 @@
 // the same list the type is derived from. They cannot drift apart.
 export const BACKGROUND_IDS = ["white", "grey", "charcoal", "black"] as const;
 export const INSET_IDS = ["tight", "even", "wide"] as const;
+export const SIZE_IDS = ["full", "medium", "small"] as const;
 export const CORNER_IDS = ["none", "subtle", "round"] as const;
 export const EDGE_IDS = ["none", "hairline"] as const;
 export const SHADOW_IDS = ["none", "soft", "deep"] as const;
@@ -10,6 +11,7 @@ export const RATIO_IDS = ["auto", "16:9", "3:2", "4:3", "1:1", "4:5"] as const;
 
 export type BackgroundId = (typeof BACKGROUND_IDS)[number];
 export type InsetId = (typeof INSET_IDS)[number];
+export type SizeId = (typeof SIZE_IDS)[number];
 export type CornerId = (typeof CORNER_IDS)[number];
 export type EdgeId = (typeof EDGE_IDS)[number];
 export type ShadowId = (typeof SHADOW_IDS)[number];
@@ -19,6 +21,7 @@ export type RatioId = (typeof RATIO_IDS)[number];
 export interface Composition {
   background: BackgroundId;
   inset: InsetId;
+  size: SizeId;
   corner: CornerId;
   edge: EdgeId;
   shadow: ShadowId;
@@ -32,6 +35,7 @@ export interface Composition {
 export const DEFAULT_COMPOSITION: Composition = {
   background: "white",
   inset: "even",
+  size: "full",
   corner: "subtle",
   edge: "none",
   shadow: "none",
@@ -50,6 +54,16 @@ export const INSETS: Record<InsetId, number> = {
   tight: 0.045,
   even: 0.09,
   wide: 0.18,
+};
+
+/**
+ * How much of the frame the artwork occupies. A screenshot wants the whole of
+ * it; a logo wants to sit small in the middle with room to breathe.
+ */
+export const SIZES: Record<SizeId, number> = {
+  full: 1,
+  medium: 0.62,
+  small: 0.38,
 };
 
 export const CORNERS: Record<CornerId, number> = {
@@ -89,6 +103,7 @@ export function sanitizeComposition(raw: unknown): Composition {
   return {
     background: pick("background", BACKGROUND_IDS),
     inset: pick("inset", INSET_IDS),
+    size: pick("size", SIZE_IDS),
     corner: pick("corner", CORNER_IDS),
     edge: pick("edge", EDGE_IDS),
     shadow: pick("shadow", SHADOW_IDS),
@@ -142,16 +157,27 @@ export function guessDensity(image: HTMLImageElement): number {
 }
 
 export function layout(art: Artwork, c: Composition): Layout {
-  const barHeight =
+  const sourceBar =
     c.frame === "window" ? Math.max(28, Math.round(art.width * 0.03)) : 0;
+  const sourceWidth = art.width;
+  const sourceHeight = art.height + sourceBar;
 
-  const cardWidth = art.width;
-  const cardHeight = art.height + barHeight;
+  // The frame stays anchored to the source's own size while `size` shrinks the
+  // card inside it. That is the point of the control: a logo wants a roomy
+  // canvas with a small mark floating in it, not a small canvas hugging it.
+  const pad = Math.round(
+    INSETS[c.inset] * Math.max(sourceWidth, sourceHeight),
+  );
+  let width = sourceWidth + pad * 2;
+  let height = sourceHeight + pad * 2;
+
+  const shrink = SIZES[c.size];
+  const cardWidth = Math.round(sourceWidth * shrink);
+  const cardHeight = Math.round(sourceHeight * shrink);
+  const barHeight = Math.round(sourceBar * shrink);
+  // Radius, shadow and the hairline follow the card, not the frame — a shrunken
+  // card wearing a full-bleed corner reads as a mistake.
   const longEdge = Math.max(cardWidth, cardHeight);
-
-  const pad = Math.round(INSETS[c.inset] * longEdge);
-  let width = cardWidth + pad * 2;
-  let height = cardHeight + pad * 2;
 
   const ratio = RATIOS[c.ratio];
   if (ratio) {

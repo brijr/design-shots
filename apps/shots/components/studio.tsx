@@ -22,6 +22,7 @@ import {
   type InsetId,
   type RatioId,
   type ShadowId,
+  type SizeId,
 } from "@/lib/composition";
 import { cn } from "@design-tools/ui/cn";
 
@@ -41,6 +42,12 @@ const INSETS: readonly Option<InsetId>[] = [
   { value: "tight", label: "Tight" },
   { value: "even", label: "Even" },
   { value: "wide", label: "Wide" },
+];
+
+const SIZE_OPTIONS: readonly Option<SizeId>[] = [
+  { value: "full", label: "Full" },
+  { value: "medium", label: "Medium" },
+  { value: "small", label: "Small" },
 ];
 
 const CORNERS: readonly Option<CornerId>[] = [
@@ -304,6 +311,14 @@ export function Studio() {
                   value={composition.inset}
                   options={INSETS}
                   onChange={(inset) => patch({ inset })}
+                />
+              </Field>
+              <Field label="Size">
+                <Segmented
+                  label="Size"
+                  value={composition.size}
+                  options={SIZE_OPTIONS}
+                  onChange={(size) => patch({ size })}
                 />
               </Field>
               <Field label="Corner">
