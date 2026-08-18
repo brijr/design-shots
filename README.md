@@ -6,6 +6,7 @@ composes something visual and hands it back — no server, no accounts, no data.
 | Tool | What it does |
 | --- | --- |
 | [`apps/shots`](apps/shots) | Turns a screenshot into a clean product shot. [design-shots.com](https://design-shots.com) |
+| [`apps/pixels`](apps/pixels) | Builds small pixel scenes with patterns, stamps, palettes, and layers. |
 
 ```bash
 pnpm install

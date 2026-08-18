@@ -1,0 +1,50 @@
+@import "tailwindcss";
+@import "@design-tools/theme/tokens.css";
+
+@source "../../../packages/ui/src";
+
+:root {
+  --stage: oklch(0.935 0 0);
+  --pixel-grid: rgba(255, 255, 255, 0.11);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --stage: oklch(0.11 0 0);
+    --pixel-grid: rgba(255, 255, 255, 0.1);
+  }
+}
+
+@theme inline {
+  --color-stage: var(--stage);
+}
+
+body {
+  overflow: hidden;
+}
+
+.pixelated {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.pixel-grid {
+  background-image:
+    linear-gradient(to right, var(--pixel-grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--pixel-grid) 1px, transparent 1px);
+  background-size: var(--pixel-size) var(--pixel-size);
+}
+
+input[type="color"] {
+  appearance: none;
+  border: 0;
+  padding: 0;
+}
+
+input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+input[type="color"]::-webkit-color-swatch {
+  border: 0;
+}
